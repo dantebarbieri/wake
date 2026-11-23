@@ -1,0 +1,21 @@
+[package]
+name = "wake"
+version = "0.1.0"
+edition = "2021"
+description = "Wake the machines in the house with Wake-on-LAN"
+license = "MIT"
+repository = "https://github.com/dantebarbieri/wake"
+publish = false
+
+[dependencies]
+clap = { version = "4.6.9", features = ["derive", "wrap_help"] }
+console = { version = "0.16.6", features = ["windows-console-colors"] }
+ctrlc = "3.5.3"
+indicatif = "0.18.6"
+mac_address = "1.2.1"
+self_update = { version = "1.3.3", default-features = false, features = ["github", "ureq", "rustls", "archive-tar", "compression-tar-gz", "archive-zip", "compression-zip-deflate", "progress-bar"] }
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
