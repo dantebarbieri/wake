@@ -56,16 +56,35 @@ pub fn wait_until_up(addr: SocketAddrV4, timeout: Duration) -> Result<Duration, 
     }
 }
 
+/// MACs of this machine: its interfaces' MACs plus those of any preset whose
+/// IP is assigned here (mac_address misses interfaces on some systems).
 pub fn local_macs() -> HashSet<[u8; 6]> {
-    mac_address::MacAddressIterator::new()
+    let mut macs: HashSet<[u8; 6]> = mac_address::MacAddressIterator::new()
         .map(|it| it.map(|m| m.bytes()).filter(|m| *m != [0; 6]).collect())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    for p in crate::presets::PRESETS {
+        if is_local_ip(p.ip) {
+            macs.extend(p.macs.iter().copied());
+        }
+    }
+    macs
+}
+
+/// Binding fails with "address not available" unless the IP is ours.
+fn is_local_ip(ip: Ipv4Addr) -> bool {
+    UdpSocket::bind(SocketAddrV4::new(ip, 0)).is_ok()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::net::TcpListener;
+
+    #[test]
+    fn only_assigned_ips_are_local() {
+        assert!(is_local_ip(Ipv4Addr::LOCALHOST));
+        assert!(!is_local_ip(Ipv4Addr::new(192, 0, 2, 1)));
+    }
 
     #[test]
     fn packet_is_sync_stream_then_sixteen_macs() {
