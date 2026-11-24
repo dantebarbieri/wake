@@ -3,24 +3,24 @@
 Wake the machines in the house with Wake-on-LAN.
 
 ```console
-$ wake pc --wait
-➜ pc       magic packet sent · 74:56:3C:B4:F5:4E → 192.168.50.255:9
-⠼ pc       waiting for RDP on 192.168.50.180:3389 12s
-✔ pc       awake after 23s · RDP answered
+$ wake totoro --wait
+➜ totoro magic packet sent · 74:56:3C:B4:F5:4E → 192.168.50.255:9
+⠼ totoro waiting for RDP on 192.168.50.180:3389 12s
+✔ totoro awake after 23s · RDP answered
 ```
 
 ## Usage
 
 ```text
 wake <TARGET>...         wake presets, `all`, or MAC addresses
-wake pc -w [SECS]        ...and wait until it answers (default 120 s)
+wake totoro -w [SECS]    ...and wait until it answers (default 120 s)
 wake all                 wake every machine except this one
 wake status              show which machines are up
 wake list                show the presets
 wake self-update         update to the latest release (--check to only look)
 ```
 
-Put `-w` after the target (`wake pc -w`): `wake -w pc` reads `pc` as the
+Put `-w` after the target (`wake totoro -w`): `wake -w totoro` reads `totoro` as the
 number of seconds.
 
 `wake` checks each machine's service port first and skips machines that
@@ -34,13 +34,14 @@ or a send failed, `2` bad arguments, `130` interrupted.
 
 | Preset | Machine | MAC | Awake when |
 |---|---|---|---|
-| `pc` | Windows desktop (Totoro) | `74:56:3C:B4:F5:4E` | RDP answers on `192.168.50.180:3389` |
+| `totoro` | Windows desktop | `74:56:3C:B4:F5:4E` | RDP answers on `192.168.50.180:3389` |
 | `no-face` | Mac Studio | `BC:89:C1:E2:01:2B` | SSH answers on `192.168.50.80:22` |
 | `calcifer` | Homeserver | `9C:6B:00:45:2B:C2`, `…:C1` | SSH answers on `192.168.50.100:28` |
 
-The presets live in [`src/presets.rs`](src/presets.rs).
+The presets live in [`src/presets.rs`](src/presets.rs). `pc`, `dante-pc`, and
+`windows` remain aliases for `totoro`; output always uses the canonical name.
 
-- **pc** wakes from sleep, hibernate, or shutdown over its wired Ethernet
+- **totoro** wakes from sleep, hibernate, or shutdown over its wired Ethernet
   adapter (Wi-Fi can't receive the packet when it's off).
 - **no-face** wakes only from sleep: Apple Silicon Macs can't be woken from a
   full shutdown.
