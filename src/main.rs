@@ -32,8 +32,8 @@ const STYLES: Styles = Styles::styled()
     .placeholder(AnsiColor::Cyan.on_default());
 
 const EXAMPLES: &str = "\x1b[1;32mExamples:\x1b[0m
-  wake pc               Wake the Windows PC
-  wake pc --wait        ...and wait until it answers
+  wake totoro           Wake Totoro, the Windows desktop
+  wake totoro --wait    ...and wait until it answers
   wake all -w 60        Wake every other machine, wait up to 60 s
   wake status           Show which machines are up
   wake list             Show the presets";
@@ -554,10 +554,21 @@ mod tests {
 
     #[test]
     fn all_skips_this_machine_and_dedupes() {
-        let pc = PRESETS[0].macs[0];
+        let totoro = PRESETS[0].macs[0];
         assert_eq!(
-            names(&["all", "pc", "studio"], &[pc]),
-            (vec!["no-face".into(), "calcifer".into()], vec!["pc".into()])
+            names(&["all", "pc", "totoro", "studio"], &[totoro]),
+            (
+                vec!["no-face".into(), "calcifer".into()],
+                vec!["totoro".into()]
+            )
+        );
+    }
+
+    #[test]
+    fn totoro_aliases_and_mac_resolve_to_one_canonical_target() {
+        assert_eq!(
+            names(&["pc", "Totoro", "windows", "74:56:3C:B4:F5:4E"], &[]),
+            (vec!["totoro".into()], vec![])
         );
     }
 
@@ -576,7 +587,10 @@ mod tests {
     #[test]
     fn unknown_target_lists_presets() {
         let err = resolve(&["toaster".into()], &HashSet::new()).err().unwrap();
-        assert!(err.contains("presets: pc, no-face, calcifer, all"), "{err}");
+        assert!(
+            err.contains("presets: totoro, no-face, calcifer, all"),
+            "{err}"
+        );
     }
 
     #[test]

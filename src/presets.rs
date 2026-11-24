@@ -22,8 +22,8 @@ pub struct Preset {
 
 pub const PRESETS: &[Preset] = &[
     Preset {
-        name: "pc",
-        aliases: &["dante-pc", "totoro", "windows"],
+        name: "totoro",
+        aliases: &["pc", "dante-pc", "windows"],
         description: "Windows desktop (wired Ethernet must be plugged in)",
         macs: &[[0x74, 0x56, 0x3c, 0xb4, 0xf5, 0x4e]],
         ip: Ipv4Addr::new(192, 168, 50, 180),
@@ -107,6 +107,9 @@ mod tests {
 
     #[test]
     fn finds_presets_by_alias_case_insensitively() {
+        for name in ["Totoro", "PC", "dante-pc", "windows"] {
+            assert_eq!(find(name).unwrap().name, "totoro");
+        }
         assert_eq!(find("Studio").unwrap().name, "no-face");
         assert_eq!(find("SERVER").unwrap().name, "calcifer");
         assert!(find("toaster").is_none());
