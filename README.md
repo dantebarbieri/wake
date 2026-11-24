@@ -68,3 +68,8 @@ Bump `version` in `Cargo.toml` and push to `main`. The release workflow tags
 `aarch64-apple-darwin`, `x86_64-pc-windows-msvc` and
 `x86_64-unknown-linux-musl`; installed copies pick it up on their next daily
 update.
+
+`wake self-update` installs newer published releases, not unreleased changes on
+`main`. Every fix intended for installed copies needs a version bump; merging
+code without one does not publish an update. Nix-managed copies update through
+their consuming flake instead.
