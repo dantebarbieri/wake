@@ -3,7 +3,7 @@
 Wake the machines in the house with Wake-on-LAN.
 
 ```console
-$ wake totoro --wait
+$ wake totoro
 ➜ totoro magic packet sent · 74:56:3C:B4:F5:4E → 192.168.50.255:9
 ⠼ totoro waiting for RDP on 192.168.50.180:3389 12s
 ✔ totoro awake after 23s · RDP answered
@@ -13,21 +13,24 @@ $ wake totoro --wait
 
 ```text
 wake <TARGET>...         wake presets, `all`, or MAC addresses
-wake totoro -w [SECS]    ...and wait until it answers (default 120 s)
+wake totoro              wake Totoro and wait up to 240 s for RDP
+wake totoro -w 60        wait up to 60 s instead
+wake totoro -W           send without waiting for a reply (--no-wait)
 wake all                 wake every machine except this one
 wake status              show which machines are up
 wake list                show the presets
 wake self-update         update to the latest release (--check to only look)
 ```
 
-Put `-w` after the target (`wake totoro -w`): `wake -w totoro` reads `totoro` as the
-number of seconds.
+`-w`/`--wait` without a timeout still uses 240 s. Put a bare `-w` after the
+target: `wake -w totoro` reads `totoro` as the number of seconds. For a MAC
+address with no preset, `wake` only waits if you provide `--check IP:PORT`.
 
 `wake` checks each machine's service port first and skips machines that
 already answer (`--force` sends anyway). The machine running `wake` is always
 skipped, so `wake all` works the same from every machine.
 
-Exit codes: `0` sent (or awake), `1` a machine didn't answer within `--wait`
+Exit codes: `0` sent (or awake), `1` a machine didn't answer within the timeout
 or a send failed, `2` bad arguments, `130` interrupted.
 
 ## Machines
