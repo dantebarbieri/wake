@@ -22,9 +22,8 @@ wake list                show the presets
 wake self-update         update to the latest release (--check to only look)
 ```
 
-`-w`/`--wait` without a timeout still uses 240 s. Put a bare `-w` after the
-target: `wake -w totoro` reads `totoro` as the number of seconds. For a MAC
-address with no preset, `wake` only waits if you provide `--check IP:PORT`.
+For a MAC address with no preset, `wake` only waits if you provide
+`--check IP:PORT`.
 
 `wake` checks each machine's service port first and skips machines that
 already answer (`--force` sends anyway). The machine running `wake` is always

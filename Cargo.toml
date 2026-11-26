@@ -1,6 +1,6 @@
 [package]
 name = "wake"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "Wake the machines in the house with Wake-on-LAN"
 license = "MIT"
