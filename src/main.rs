@@ -14,7 +14,7 @@ use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 
 use presets::{format_mac, Preset, PRESETS};
 
-const DEFAULT_WAIT_SECS: &str = "120";
+const DEFAULT_WAIT_SECS: &str = "240";
 const PRECHECK_TIMEOUT: Duration = Duration::from_millis(800);
 
 static OK: Emoji = Emoji("✔", "+");
@@ -32,8 +32,8 @@ const STYLES: Styles = Styles::styled()
     .placeholder(AnsiColor::Cyan.on_default());
 
 const EXAMPLES: &str = "\x1b[1;32mExamples:\x1b[0m
-  wake totoro           Wake Totoro, the Windows desktop
-  wake totoro --wait    ...and wait until it answers
+  wake totoro           Wake Totoro and wait until it answers
+  wake totoro -W        Send without waiting for a reply
   wake all -w 60        Wake every other machine, wait up to 60 s
   wake status           Show which machines are up
   wake list             Show the presets";
@@ -56,10 +56,15 @@ struct Cli {
     #[arg(value_name = "TARGET")]
     targets: Vec<String>,
 
-    /// Wait until each machine answers [default: 120 s]
+    /// Seconds to wait for each machine to answer
     #[arg(short, long, value_name = "SECS", num_args = 0..=1,
+          default_value = DEFAULT_WAIT_SECS,
           default_missing_value = DEFAULT_WAIT_SECS, value_parser = parse_secs)]
-    wait: Option<Duration>,
+    wait: Duration,
+
+    /// Skip waiting for a reply after sending
+    #[arg(short = 'W', long, conflicts_with = "wait")]
+    no_wait: bool,
 
     /// TCP endpoint that means "awake" (one target only)
     #[arg(long, value_name = "IP:PORT")]
@@ -305,7 +310,8 @@ fn wake_one(cli: &Cli, ui: &Ui, t: &Target) -> bool {
         }
     }
     let macs = t.macs.iter().map(format_mac).collect::<Vec<_>>().join(", ");
-    let glyph = if cli.wait.is_some() && t.check.is_some() {
+    let wait_for = t.check.filter(|_| !cli.no_wait);
+    let glyph = if wait_for.is_some() {
         style(SENT).cyan()
     } else {
         style(OK).green()
@@ -323,11 +329,11 @@ fn wake_one(cli: &Cli, ui: &Ui, t: &Target) -> bool {
         ipmi_power_on(ui, name, bmc);
     }
 
-    let (Some(timeout), Some((addr, service))) = (cli.wait, t.check) else {
+    let Some((addr, service)) = wait_for else {
         return true;
     };
     let pb = ui.spinner(name, format!("waiting for {service} on {addr}"));
-    let result = net::wait_until_up(addr, timeout);
+    let result = net::wait_until_up(addr, cli.wait);
     pb.finish_and_clear();
     match result {
         Ok(after) => {
@@ -350,7 +356,7 @@ fn wake_one(cli: &Cli, ui: &Ui, t: &Target) -> bool {
                     "{} {}",
                     style(format!(
                         "no answer from {service} on {addr} within {}",
-                        secs(timeout)
+                        secs(cli.wait)
                     ))
                     .red(),
                     style(format!("({last})")).dim()
@@ -595,14 +601,31 @@ mod tests {
 
     #[test]
     fn cli_parses_optional_wait() {
-        let cli = Cli::try_parse_from(["wake", "pc", "-w"]).unwrap();
-        assert_eq!(cli.wait, Some(Duration::from_secs(120)));
+        for args in [vec!["wake", "pc"], vec!["wake", "pc", "-w"]] {
+            let cli = Cli::try_parse_from(args).unwrap();
+            assert!(!cli.no_wait);
+            assert_eq!(cli.wait, Duration::from_secs(240));
+        }
         let cli = Cli::try_parse_from(["wake", "-w", "30", "pc"]).unwrap();
-        assert_eq!(cli.wait, Some(Duration::from_secs(30)));
+        assert_eq!(cli.wait, Duration::from_secs(30));
         assert!(Cli::try_parse_from(["wake", "pc", "-w", "0"]).is_err());
         assert!(Cli::try_parse_from(["wake", "status"])
             .unwrap()
             .command
             .is_some());
+    }
+
+    #[test]
+    fn cli_no_wait_conflicts_only_with_explicit_wait() {
+        for flag in ["-W", "--no-wait"] {
+            assert!(Cli::try_parse_from(["wake", flag, "pc"]).unwrap().no_wait);
+            assert_eq!(
+                Cli::try_parse_from(["wake", "pc", "--wait", "30", flag])
+                    .err()
+                    .unwrap()
+                    .kind(),
+                clap::error::ErrorKind::ArgumentConflict
+            );
+        }
     }
 }
