@@ -57,9 +57,8 @@ struct Cli {
     targets: Vec<String>,
 
     /// Seconds to wait for each machine to answer
-    #[arg(short, long, value_name = "SECS", num_args = 0..=1,
-          default_value = DEFAULT_WAIT_SECS,
-          default_missing_value = DEFAULT_WAIT_SECS, value_parser = parse_secs)]
+    #[arg(short, long, value_name = "SECS", default_value = DEFAULT_WAIT_SECS,
+          value_parser = parse_secs)]
     wait: Duration,
 
     /// Skip waiting for a reply after sending
@@ -600,14 +599,17 @@ mod tests {
     }
 
     #[test]
-    fn cli_parses_optional_wait() {
-        for args in [vec!["wake", "pc"], vec!["wake", "pc", "-w"]] {
-            let cli = Cli::try_parse_from(args).unwrap();
-            assert!(!cli.no_wait);
-            assert_eq!(cli.wait, Duration::from_secs(240));
+    fn cli_parses_wait() {
+        let cli = Cli::try_parse_from(["wake", "pc"]).unwrap();
+        assert!(!cli.no_wait);
+        assert_eq!(cli.wait, Duration::from_secs(240));
+        for args in [["wake", "-w", "30", "pc"], ["wake", "pc", "-w", "30"]] {
+            assert_eq!(
+                Cli::try_parse_from(args).unwrap().wait,
+                Duration::from_secs(30)
+            );
         }
-        let cli = Cli::try_parse_from(["wake", "-w", "30", "pc"]).unwrap();
-        assert_eq!(cli.wait, Duration::from_secs(30));
+        assert!(Cli::try_parse_from(["wake", "pc", "-w"]).is_err());
         assert!(Cli::try_parse_from(["wake", "pc", "-w", "0"]).is_err());
         assert!(Cli::try_parse_from(["wake", "status"])
             .unwrap()
